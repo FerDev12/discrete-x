@@ -123,7 +123,12 @@ export default function ForgotPassword() {
           Continue
         </Button>
 
-        <Link href={`/login?${searchParams}`}>Go to Login</Link>
+        <Link
+          href={`/login?${searchParams}`}
+          className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+        >
+          Go to Login
+        </Link>
       </CardFooter>
     </Card>
   );

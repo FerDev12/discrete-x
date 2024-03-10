@@ -1,11 +1,13 @@
 import { pgTable, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { uuid as uuidv4 } from 'uuidv4';
 import { users } from './users';
 import { servers } from './servers';
 import { memberRole } from './enums';
+import { sql } from 'drizzle-orm';
 
 export const members = pgTable('members', {
-  id: uuid('id').primaryKey().$defaultFn(uuidv4),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   role: memberRole('role').notNull().default('member'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),

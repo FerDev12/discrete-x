@@ -154,7 +154,7 @@ export function Login() {
           <div className='flex items-center space-x-2'>
             <p>Don{"'"}t have an acount?</p>{' '}
             <Link
-              href='/signup'
+              href={`/signup?${searchParams}`}
               className='hover:no-underline hover:text-foreground'
             >
               Sign up

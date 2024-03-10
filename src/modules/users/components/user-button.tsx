@@ -20,10 +20,14 @@ export function UserButton() {
   const { user } = useUser();
   const { signOut } = useClerk();
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button>
+        <Button variant='ghost' size='icon'>
           <Avatar>
             <AvatarImage src={user?.imageUrl} alt='user' />
             <AvatarFallback>
@@ -32,7 +36,7 @@ export function UserButton() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className='w-56'>
         <DropdownMenuLabel className='flex items-center space-x-2'>
           <Avatar>
             <AvatarImage src={user?.imageUrl} alt='user' />

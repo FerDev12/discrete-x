@@ -1,23 +1,22 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { uuid as uuidv4 } from 'uuidv4';
-import { files } from './files';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
+import { userImages } from '.';
 
 export const users = pgTable('users', {
-  id: uuid('id').primaryKey().$defaultFn(uuidv4),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: text('user_id').unique().notNull(),
   username: text('username').unique().notNull(),
+  email: text('email').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-
-  // Relationships
-  imageId: uuid('image_id').references(() => files.id, {
-    onDelete: 'set null',
-  }),
 });
 
 export const usersRelationships = relations(users, ({ one }) => ({
-  image: one(files, { fields: [users.imageId], references: [files.id] }),
+  image: one(userImages),
 }));
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type PartialUser = Omit<Partial<User>, 'id' | 'createdAt' | 'updatedAt'>;
