@@ -1,7 +1,7 @@
 import { users } from '@/models';
 import { deleteUserByUserId, upsertUser } from '../actions/server';
 import { clerkClient } from '@clerk/nextjs';
-import { getDB } from '@/database';
+import { db, pool } from '@/database';
 
 let clerkUserId = '';
 const username = 'test';
@@ -9,35 +9,33 @@ const emailAddress = 'test+clerk_test@test.com';
 const newEmailAddress = 'test2+clerk_test@test.com';
 const password = 'elixir_test123ac';
 
+const wait = (time: number) =>
+  new Promise((res, rej) => setTimeout(() => res(''), time));
+
 beforeAll(async () => {
-  const { db, pool } = getDB();
   try {
     await db.delete(users);
   } catch (err: any) {
     console.error(err);
-  } finally {
-    pool.end();
   }
 });
 
 afterAll(async () => {
-  if (clerkUserId) {
-    await clerkClient.users.deleteUser(clerkUserId);
-  }
-  const { db, pool } = getDB();
   try {
+    if (clerkUserId) {
+      await clerkClient.users.deleteUser(clerkUserId);
+    }
     await db.delete(users);
   } catch (err: any) {
     console.error(err);
   } finally {
-    pool.end();
+    await pool.end();
   }
 });
 
 describe('User module', () => {
   it('Successfully creates a user', async () => {
     // Create clerk test user
-    const { db, pool } = getDB();
 
     try {
       let dbUser = await db.query.users.findFirst();
@@ -62,13 +60,10 @@ describe('User module', () => {
       expect(dbUser).not.toBe(undefined);
     } catch (err: any) {
       console.error(err);
-    } finally {
-      pool.end();
     }
   });
 
   it('Successfully updates a user email address', async () => {
-    const { db, pool } = getDB();
     try {
       let dbUser = await db.query.users.findFirst();
 
@@ -96,14 +91,10 @@ describe('User module', () => {
       expect(dbUser.email).toBe(newEmailAddress);
     } catch (err: any) {
       console.error(err);
-    } finally {
-      pool.end();
     }
   });
 
   it('Successfully deletes a user', async () => {
-    const { db, pool } = getDB();
-
     try {
       const dbUser = await db.query.users.findFirst();
 
@@ -117,8 +108,6 @@ describe('User module', () => {
       expect(deletedUser).toBe(undefined);
     } catch (err: any) {
       console.error(err);
-    } finally {
-      pool.end();
     }
   });
 });

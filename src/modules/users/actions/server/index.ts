@@ -1,90 +1,79 @@
 import 'server-only';
 
-import { getDB } from '@/database';
+// import { getDB } from '@/database';
 import { files, userImages, users } from '@/models';
 import { eq } from 'drizzle-orm';
 import { clerkClient } from '@clerk/nextjs';
+import { db } from '@/database';
 
 export async function deleteUserByUserId(userId: string) {
-  const { db, pool } = getDB();
-  try {
-    await db.delete(users).where(eq(users.userId, userId));
-  } finally {
-    pool.end();
-  }
+  await db.delete(users).where(eq(users.userId, userId));
 }
 
 export async function upsertUser(userId: string) {
-  console.log('---------------------------------------');
-  const { db, pool } = getDB();
-  console.log('---------------------------------------');
-  try {
-    const user = await clerkClient.users.getUser(userId);
+  const user = await clerkClient.users.getUser(userId);
 
-    if (!user || !user.username) {
-      return;
-    }
+  if (!user || !user.username) {
+    return;
+  }
 
-    const email = user.emailAddresses.find(
-      (e) => e.id === user.primaryEmailAddressId
-    )?.emailAddress;
+  const email = user.emailAddresses.find(
+    (e) => e.id === user.primaryEmailAddressId
+  )?.emailAddress;
 
-    if (!email) return;
+  if (!email) return;
 
-    await db.transaction(async (tx) => {
-      // Upsert user
-      const [dbUser] = await tx
-        .insert(users)
-        .values({
-          userId: user.id,
+  await db.transaction(async (tx) => {
+    // Upsert user
+    const [dbUser] = await tx
+      .insert(users)
+      .values({
+        userId: user.id,
+        username: user.username!,
+        email: email,
+      })
+      .onConflictDoUpdate({
+        target: users.userId,
+        set: {
           username: user.username!,
           email: email,
-        })
-        .onConflictDoUpdate({
-          target: users.userId,
-          set: {
-            username: user.username!,
-            email: email,
-          },
+        },
+      })
+      .returning();
+
+    // Query for existing user image
+    const dbUserImage = await tx.query.userImages.findFirst({
+      where: eq(userImages.userId, dbUser.id),
+      with: {
+        image: true,
+      },
+    });
+
+    if (!dbUserImage) {
+      // Create file
+      const [file] = await tx
+        .insert(files)
+        .values({
+          url: user.imageUrl,
+          type: 'image',
         })
         .returning();
-
-      // Query for existing user image
-      const dbUserImage = await tx.query.userImages.findFirst({
-        where: eq(userImages.userId, dbUser.id),
-        with: {
-          image: true,
-        },
+      // Create user image
+      await tx.insert(userImages).values({
+        userId: dbUser.id,
+        fileId: file.id,
       });
-
-      if (!dbUserImage) {
-        // Create file
-        const [file] = await tx
-          .insert(files)
-          .values({
-            url: user.imageUrl,
-            type: 'image',
-          })
-          .returning();
-        // Create user image
-        await tx.insert(userImages).values({
-          userId: dbUser.id,
-          fileId: file.id,
-        });
-      } else {
-        if (dbUserImage.image?.url === user.imageUrl) {
-          // If user image exists and has the same url as passed in imageUrl return
-          return;
-        }
-
-        // Update image file url
-        await tx
-          .update(files)
-          .set({ url: user.imageUrl })
-          .where(eq(files.id, dbUserImage.fileId));
+    } else {
+      if (dbUserImage.image?.url === user.imageUrl) {
+        // If user image exists and has the same url as passed in imageUrl return
+        return;
       }
-    });
-  } finally {
-    pool.end();
-  }
+
+      // Update image file url
+      await tx
+        .update(files)
+        .set({ url: user.imageUrl })
+        .where(eq(files.id, dbUserImage.fileId));
+    }
+  });
 }

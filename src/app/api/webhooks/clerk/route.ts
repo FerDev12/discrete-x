@@ -4,10 +4,6 @@ import { WebhookEvent } from '@clerk/nextjs/server';
 import { deleteUserByUserId, upsertUser } from '@/modules/users/actions/server';
 
 export async function POST(req: Request) {
-  if (process.env.NODE_ENV === 'test') {
-    return new Response('', { status: 200 });
-  }
-
   // You can find this in the Clerk Dashboard -> Webhooks -> choose the webhook
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
