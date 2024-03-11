@@ -53,6 +53,13 @@ export async function POST(req: Request) {
   const { id } = evt.data;
   const eventType = evt.type;
 
+  if (
+    'publicMetadata' in evt.data &&
+    'test' in (evt.data.publicMetadata as any)
+  ) {
+    return new Response('', { status: 200 });
+  }
+
   switch (eventType) {
     case 'user.created':
     case 'user.updated':

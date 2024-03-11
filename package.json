@@ -42,6 +42,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uploadthing": "^6.5.2",
     "uuidv4": "^6.2.13",
+    "ws": "^8.16.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -50,6 +51,7 @@
     "@types/pg": "^8.11.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/ws": "^8.5.10",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.20.14",
     "eslint": "^8",
