@@ -9,7 +9,6 @@
     "lint": "next lint",
     "test": "jest --verbose --watchAll",
     "start:dev": "next start & pnpm ngrok",
-    "preinstall": "npx allow only pmpm",
     "db-push": "drizzle-kit push:pg",
     "db-push:dev": "NODE_ENV=development pnpm db-push",
     "db-studio": "NODE_ENV=development pnpm drizzle-kit studio",
