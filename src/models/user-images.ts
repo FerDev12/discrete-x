@@ -1,23 +1,24 @@
-import { pgTable, primaryKey, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, primaryKey, unique, uuid } from 'drizzle-orm/pg-core';
 import { files, users } from '.';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 export const userImages = pgTable(
   'user_images',
   {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     userId: uuid('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
-      .unique()
       .notNull(),
     fileId: uuid('file_ID')
       .references(() => files.id, {
         onDelete: 'cascade',
       })
-      .unique()
       .notNull(),
   },
   (t) => ({
-    pk: primaryKey({ columns: [t.fileId, t.userId] }),
+    unq: unique().on(t.userId, t.fileId),
   })
 );
 

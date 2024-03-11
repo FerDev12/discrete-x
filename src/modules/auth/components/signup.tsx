@@ -125,7 +125,7 @@ export function Signup() {
       }
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
-        router.replace('/');
+        router.push('/');
       }
     } catch (err: any) {
       toast.error(err.errors[0].message);

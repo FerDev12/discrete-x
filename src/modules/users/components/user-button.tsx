@@ -21,17 +21,25 @@ export function UserButton() {
   const { signOut } = useClerk();
 
   if (!user) {
-    return null;
+    return (
+      <Button variant='outline' size='icon'>
+        <Avatar className='rounded-md'>
+          <AvatarFallback className='rounded-md'>
+            <UserIcon className='w-5 h-5' />
+          </AvatarFallback>
+        </Avatar>
+      </Button>
+    );
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon'>
-          <Avatar>
+        <Button variant='outline' size='icon'>
+          <Avatar className='rounded-md'>
             <AvatarImage src={user?.imageUrl} alt='user' />
-            <AvatarFallback>
-              <UserIcon className='w-4 h-4' />
+            <AvatarFallback className='rounded-md'>
+              <UserIcon className='w-5 h-5' />
             </AvatarFallback>
           </Avatar>
         </Button>

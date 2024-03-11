@@ -1,11 +1,21 @@
 import 'server-only';
-import { db } from '@/database';
+
 import { files, userImages, users } from '@/models';
 import { eq } from 'drizzle-orm';
 import { clerkClient } from '@clerk/nextjs';
+import { db } from '@/database';
 
 export async function deleteUserByUserId(userId: string) {
-  await db.delete(users).where(eq(users.userId, userId));
+  const dbUser = await db.query.users.findFirst({
+    columns: {
+      id: true,
+    },
+    where: eq(users.userId, userId),
+  });
+
+  if (dbUser) {
+    await db.delete(users).where(eq(users.userId, userId));
+  }
 }
 
 export async function upsertUser(userId: string) {
