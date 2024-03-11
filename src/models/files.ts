@@ -13,4 +13,4 @@ export const files = pgTable('files', {
 });
 
 export type File = typeof files.$inferSelect;
-export type NewFiel = typeof files.$inferInsert;
+export type NewFile = typeof files.$inferInsert;

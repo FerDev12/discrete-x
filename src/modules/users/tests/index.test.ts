@@ -9,9 +9,6 @@ const emailAddress = 'test+clerk_test@test.com';
 const newEmailAddress = 'test2+clerk_test@test.com';
 const password = 'elixir_test123ac';
 
-const wait = (time: number) =>
-  new Promise((res, rej) => setTimeout(() => res(''), time));
-
 beforeAll(async () => {
   try {
     await db.delete(users);
@@ -34,6 +31,26 @@ afterAll(async () => {
 });
 
 describe('User module', () => {
+  it('Rollbacks a transaction when an error is thrown', async () => {
+    try {
+      await db.transaction(async (tx) => {
+        await tx.insert(users).values({
+          username: 'pancho',
+          email: 'pancho@test.com',
+          userId: '1234',
+        });
+
+        const user = await tx.query.users.findFirst();
+        expect(user?.username).toBe('pancho');
+        throw new Error('Ooops!');
+      });
+    } catch (err: any) {
+    } finally {
+      const users = await db.query.users.findFirst();
+      expect(users).toBe(undefined);
+    }
+  });
+
   it('Successfully creates a user', async () => {
     // Create clerk test user
 
