@@ -14,8 +14,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Use whatever node version your project requires
+          node-version: '20' # Use whatever node version your project requires
           cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
 
       - name: Install Dependencies
         run: pnpm install
