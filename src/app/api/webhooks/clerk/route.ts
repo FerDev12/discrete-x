@@ -4,8 +4,12 @@ import { WebhookEvent } from '@clerk/nextjs/server';
 import { deleteUserByUserId, upsertUser } from '@/modules/users/actions/server';
 
 export async function POST(req: Request) {
+  if (process.env.NODE_ENV === 'test') {
+    return new Response('', { status: 200 });
+  }
+
   // You can find this in the Clerk Dashboard -> Webhooks -> choose the webhook
-  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+  const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
     throw new Error(
@@ -52,13 +56,6 @@ export async function POST(req: Request) {
   // Get the ID and type
   const { id } = evt.data;
   const eventType = evt.type;
-
-  if (
-    'publicMetadata' in evt.data &&
-    'test' in (evt.data.publicMetadata as any)
-  ) {
-    return new Response('', { status: 200 });
-  }
 
   switch (eventType) {
     case 'user.created':

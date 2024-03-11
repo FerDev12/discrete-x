@@ -1,10 +1,9 @@
 import { ArrowRight } from 'lucide-react';
-import { Button } from './ui/button';
 import { LinkButton } from './ui/link-button';
 
 export function Hero() {
   return (
-    <section className='flex items-center justify-between min-h-screen'>
+    <section className='flex items-center justify-between min-h-screen/header'>
       <div className='p-4'>
         <div className='mb-8'>
           <h1 className='text-5xl md:text-7xl font-semibold mb-2'>

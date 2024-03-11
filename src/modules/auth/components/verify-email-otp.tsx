@@ -20,6 +20,7 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { cn } from '@/lib/utils/cn';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { OTPInput } from 'input-otp';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -72,7 +73,7 @@ export function VerifyEmailOTPForm({
         <CardTitle>Verify Email</CardTitle>
         <CardDescription>
           Enter the verification code sent to: <br />
-          {email}
+          <span className='font-medium'>{email}</span>
         </CardDescription>
       </CardHeader>
 
@@ -95,7 +96,10 @@ export function VerifyEmailOTPForm({
                         <InputOTPGroup>
                           {slots.map((slot, index) => (
                             <Fragment key={index}>
-                              <InputOTPSlot {...slot} />
+                              <InputOTPSlot
+                                {...slot}
+                                className={cn(index === 3 && 'border-l')}
+                              />
                               {index === 2 && <InputOTPSeparator />}
                             </Fragment>
                           ))}{' '}
@@ -112,7 +116,7 @@ export function VerifyEmailOTPForm({
         </Form>
       </CardContent>
 
-      <CardFooter className='justify-end'>
+      <CardFooter className='justify-between'>
         <Button
           variant='ghost'
           disabled={isSubmitting}

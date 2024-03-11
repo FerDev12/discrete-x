@@ -11,7 +11,9 @@ const DB_URL =
     ? process.env.NEON_DB_URL_TEST
     : process.env.NEON_DB_URL_PROD;
 
-neonConfig.webSocketConstructor = ws;
+if (process.env.NODE_ENV === 'test') {
+  neonConfig.webSocketConstructor = ws;
+}
 
 export function getDB() {
   const pool = new Pool({

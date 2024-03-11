@@ -1,4 +1,5 @@
 import 'server-only';
+
 import { getDB } from '@/database';
 import { files, userImages, users } from '@/models';
 import { eq } from 'drizzle-orm';
@@ -14,7 +15,9 @@ export async function deleteUserByUserId(userId: string) {
 }
 
 export async function upsertUser(userId: string) {
+  console.log('---------------------------------------');
   const { db, pool } = getDB();
+  console.log('---------------------------------------');
   try {
     const user = await clerkClient.users.getUser(userId);
 

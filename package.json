@@ -7,12 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest --verbose --watchAll",
+    "test": "jest --verbose --watchAll --detectOpenHandles",
+    "start:dev": "next start & pnpm ngrok",
     "preinstall": "npx allow only pmpm",
     "db-push": "drizzle-kit push:pg",
     "db-push:dev": "NODE_ENV=development pnpm db-push",
     "db-push:test": "NODE_ENV=test pnpm db-push",
-    "db-studio": "NODE_ENV=development pnpm drizzle-kit studio"
+    "db-studio": "NODE_ENV=development pnpm drizzle-kit studio",
+    "ngrok": "ngrok http --domain=sure-equipped-tadpole.ngrok-free.app 3000"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.29.9",
@@ -23,6 +25,7 @@
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tooltip": "^1.0.7",
     "@uploadthing/react": "^6.3.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
