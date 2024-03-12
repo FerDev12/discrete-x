@@ -7,6 +7,7 @@ const { NODE_ENV: ENV, NEON_DB_URL: DB_URL } = process.env;
 
 if (ENV === 'test') {
   neonConfig.webSocketConstructor = ws;
+  console.log('Testing');
 }
 
 export const pool = new Pool({
