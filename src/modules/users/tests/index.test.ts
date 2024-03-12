@@ -2,27 +2,23 @@ import { users } from '@/models';
 import { deleteUserByUserId, upsertUser } from '../actions/server';
 import { clerkClient } from '@clerk/nextjs';
 import { db, pool } from '@/database';
+import { eq } from 'drizzle-orm';
+import { randomBytes } from 'crypto';
 
 let clerkUserId = '';
 const username = 'test';
 const emailAddress = 'test+clerk_test@test.com';
 const newEmailAddress = 'test2+clerk_test@test.com';
-const password = 'elixir_test123ac';
-
-beforeAll(async () => {
-  try {
-    await db.delete(users);
-  } catch (err: any) {
-    console.error(err);
-  }
-});
+const password = randomBytes(16).toString('hex');
 
 afterAll(async () => {
   try {
     if (clerkUserId) {
-      await clerkClient.users.deleteUser(clerkUserId);
+      await Promise.all([
+        clerkClient.users.deleteUser(clerkUserId),
+        db.delete(users).where(eq(users.userId, clerkUserId)),
+      ]);
     }
-    await db.delete(users);
   } catch (err: any) {
     console.error(err);
   } finally {
@@ -32,40 +28,41 @@ afterAll(async () => {
 
 describe('User module', () => {
   it('Rollbacks a transaction when an error is thrown', async () => {
+    const email = 'pancho+clerk_test@test.com';
+    const username = 'pancho';
+    const userId = '1234';
+
     try {
       await db.transaction(async (tx) => {
         await tx.insert(users).values({
-          username: 'pancho',
-          email: 'pancho@test.com',
-          userId: '1234',
+          email,
+          username,
+          userId,
         });
 
-        const user = await tx.query.users.findFirst();
-        expect(user?.username).toBe('pancho');
+        const user = await tx.query.users.findFirst({
+          where: eq(users.userId, userId),
+        });
+        expect(user).not.toBe(undefined);
+        expect(user?.userId).toBe(userId);
+
         throw new Error('Ooops!');
       });
     } catch (err: any) {
-    } finally {
-      const users = await db.query.users.findFirst();
-      expect(users).toBe(undefined);
+      const user = await db.query.users.findFirst({
+        where: eq(users.userId, userId),
+      });
+      expect(user).toBe(undefined);
     }
   });
 
   it('Successfully creates a user', async () => {
     // Create clerk test user
-
     try {
-      let dbUser = await db.query.users.findFirst();
-
-      expect(dbUser).toBe(undefined);
-
       const clerkUser = await clerkClient.users.createUser({
         username,
         password,
         emailAddress: [emailAddress],
-        publicMetadata: {
-          test: true,
-        },
       });
 
       clerkUserId = clerkUser.id;
@@ -73,9 +70,15 @@ describe('User module', () => {
       // Call upsertUser(id) and insert the user id from clerk
       await upsertUser(clerkUserId);
 
-      dbUser = await db.query.users.findFirst();
+      const dbUser = await db.query.users.findFirst({
+        columns: {
+          userId: true,
+        },
+        where: eq(users.userId, clerkUserId),
+      });
 
-      expect(dbUser?.id).not.toBe(undefined);
+      expect(dbUser).not.toBe(undefined);
+      expect(dbUser?.userId).toBe(clerkUserId);
     } catch (err: any) {
       fail(err);
     }
@@ -83,10 +86,20 @@ describe('User module', () => {
 
   it('Successfully updates a user email address', async () => {
     try {
-      let dbUser = await db.query.users.findFirst();
+      if (!clerkUserId) {
+        return fail('Clerk user Id is empty');
+      }
+
+      let dbUser = await db.query.users.findFirst({
+        columns: {
+          email: true,
+          userId: true,
+        },
+        where: eq(users.userId, clerkUserId),
+      });
 
       if (!dbUser) {
-        throw new Error('User not found');
+        return fail('User not found');
       }
 
       expect(dbUser.email).toBe(emailAddress);
@@ -100,7 +113,13 @@ describe('User module', () => {
 
       await upsertUser(dbUser.userId);
 
-      dbUser = await db.query.users.findFirst();
+      dbUser = await db.query.users.findFirst({
+        columns: {
+          userId: true,
+          email: true,
+        },
+        where: eq(users.userId, clerkUserId),
+      });
 
       if (!dbUser) {
         throw new Error('User not found');
@@ -114,14 +133,25 @@ describe('User module', () => {
 
   it('Successfully deletes a user', async () => {
     try {
-      const dbUser = await db.query.users.findFirst();
+      if (!clerkUserId) {
+        return fail('Clerk user Id is empty');
+      }
+
+      const dbUser = await db.query.users.findFirst({
+        where: eq(users.userId, clerkUserId),
+      });
 
       if (!dbUser) {
-        throw new Error('User not found');
+        return fail('User not found');
       }
 
       await deleteUserByUserId(dbUser.userId);
-      const deletedUser = await db.query.users.findFirst();
+      const deletedUser = await db.query.users.findFirst({
+        columns: {
+          userId: true,
+        },
+        where: eq(users.userId, clerkUserId),
+      });
 
       expect(deletedUser).toBe(undefined);
     } catch (err: any) {

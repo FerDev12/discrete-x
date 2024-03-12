@@ -10,7 +10,6 @@ if (ENV === 'test') {
 }
 
 const max = ENV === 'test' ? 1 : 20;
-console.log({ test_secret: process.env.TEST_SECRET });
 
 export const pool = new Pool({
   connectionString: DB_URL,

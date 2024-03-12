@@ -12,7 +12,6 @@ jobs:
       NEON_DB_URL: ${{ secrets.NEON_DB_URL }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-      TEST_SECRET: ${{ secrets.TEST_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
