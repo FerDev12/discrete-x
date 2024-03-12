@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use whatever node version your project requires
+          node-version: '20'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
