@@ -58,6 +58,7 @@ describe('User module', () => {
       let dbUser = await db.query.users.findFirst();
 
       expect(dbUser).toBe(undefined);
+
       const clerkUser = await clerkClient.users.createUser({
         username,
         password,
@@ -74,9 +75,9 @@ describe('User module', () => {
 
       dbUser = await db.query.users.findFirst();
 
-      expect(dbUser).not.toBe(undefined);
+      expect(dbUser?.id).not.toBe(undefined);
     } catch (err: any) {
-      console.error(err);
+      fail(err);
     }
   });
 
@@ -107,7 +108,7 @@ describe('User module', () => {
 
       expect(dbUser.email).toBe(newEmailAddress);
     } catch (err: any) {
-      console.error(err);
+      fail(err);
     }
   });
 
@@ -124,7 +125,7 @@ describe('User module', () => {
 
       expect(deletedUser).toBe(undefined);
     } catch (err: any) {
-      console.error(err);
+      fail(err);
     }
   });
 });
