@@ -5,7 +5,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <Header />
-      <main className='container'>{children}</main>
+      <main className='container-sm sm:container'>{children}</main>
     </>
   );
 }

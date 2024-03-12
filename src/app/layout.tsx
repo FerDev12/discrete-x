@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
+import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/providers/theme-provider';
-
-const inter = Inter({ subsets: ['latin'] });
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
+import { cn } from '@/lib/utils/cn';
 
 export const metadata: Metadata = {
   title: 'Discrete X',
@@ -20,7 +20,13 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang='en' suppressHydrationWarning>
-        <body className={`bg-background antialiased ${inter.className}`}>
+        <body
+          className={cn(
+            'bg-background antialiased font-mono',
+            GeistSans.variable,
+            GeistMono.variable
+          )}
+        >
           <ThemeProvider
             attribute='class'
             defaultTheme='system'

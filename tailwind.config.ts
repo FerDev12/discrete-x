@@ -1,4 +1,17 @@
 import { withUt } from 'uploadthing/tw';
+import plugin from 'tailwindcss/plugin';
+
+const extraUtilities = plugin(function ({ addUtilities }) {
+  addUtilities({
+    '.container-sm': {
+      'margin-right': 'auto',
+      'margin-left': 'auto',
+      width: '100%',
+      'padding-left': '1rem',
+      'padding-right': '1rem',
+    },
+  });
+});
 
 export default withUt({
   darkMode: ['class'],
@@ -18,6 +31,10 @@ export default withUt({
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-geist-sans)'],
+        mono: ['var(--font-geist-mono)'],
+      },
       height: {
         screen: '100svh',
         'screen/header': 'calc(100svh - 64px)',
@@ -95,5 +112,5 @@ export default withUt({
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), extraUtilities],
 });
