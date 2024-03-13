@@ -61,6 +61,7 @@ export function Signup() {
     searchParams.get('verify') === 'true'
   );
   const { isLoaded, signUp, setActive } = useSignUp();
+  const [signupResult, setSignupResult] = useState<typeof signUp | null>(null);
   const form = useForm<SignUpFormSchemaType>({
     resolver: zodResolver(signupFormSchema),
     defaultValues: {
@@ -76,6 +77,8 @@ export function Signup() {
     formState: { isSubmitting },
   } = form;
 
+  const createSignup = async () => {};
+
   const onSubmit = async (values: SignUpFormSchemaType) => {
     if (!isLoaded || isSubmitting) return;
 
@@ -86,15 +89,17 @@ export function Signup() {
     }
 
     try {
-      await signUp.create({
+      const result = await signUp.create({
         emailAddress: values.email,
         username: values.username,
         password: values.password,
       });
 
-      await signUp.prepareEmailAddressVerification({
+      await result.prepareEmailAddressVerification({
         strategy: 'email_code',
       });
+
+      setSignupResult(result);
 
       setIsVerifyingEmail(true);
       const currentParams = Object.fromEntries(searchParams.entries());
@@ -109,30 +114,33 @@ export function Signup() {
     }
   };
 
-  const onHandleVerification = async ({ code }: { code: string }) => {
-    if (!isLoaded || isSubmitting) {
-      return;
-    }
+  const onHandleVerification = useCallback(
+    async ({ code }: { code: string }) => {
+      if (!isLoaded || isSubmitting) {
+        return;
+      }
 
-    try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-      if (completeSignUp.status !== 'complete') {
-        /*  investigate the response, to see if there was an error
+      try {
+        const completeSignUp = await signUp.attemptEmailAddressVerification({
+          code,
+        });
+        if (completeSignUp.status !== 'complete') {
+          /*  investigate the response, to see if there was an error
          or if the user needs to complete more steps.*/
-        console.log(JSON.stringify(completeSignUp, null, 2));
+          console.log(JSON.stringify(completeSignUp, null, 2));
+        }
+        if (completeSignUp.status === 'complete') {
+          await setActive({ session: completeSignUp.createdSessionId });
+          console.log('Setting session');
+          router.push('/');
+        }
+      } catch (err: any) {
+        console.error(err);
+        toast.error(err.errors[0].message);
       }
-      if (completeSignUp.status === 'complete') {
-        await setActive({ session: completeSignUp.createdSessionId });
-        console.log('Setting session');
-        router.push('/');
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.errors[0].message);
-    }
-  };
+    },
+    [isLoaded, isSubmitting, router, setActive, signUp]
+  );
 
   const onCancelVerification = useCallback(async () => {
     setIsVerifyingEmail(false);
@@ -150,6 +158,7 @@ export function Signup() {
   if (isVerifyingEmail) {
     return (
       <VerifyEmailOTPForm
+        authResource={signupResult}
         email={form.getValues('email')}
         handleVerification={onHandleVerification}
         onCancel={onCancelVerification}

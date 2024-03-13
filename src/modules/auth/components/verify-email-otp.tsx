@@ -23,15 +23,16 @@ import {
 import { cn } from '@/lib/utils/cn';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { OTPInput } from 'input-otp';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 interface VerifyEmailOTPFormProps {
   email: string;
   handleVerification: (values: VerifyEmailFormType) => Promise<void>;
   onCancel: () => void;
+  authResource: any;
 }
 
 const verifyEmailFormSchema = z.object({
@@ -42,9 +43,11 @@ type VerifyEmailFormType = z.infer<typeof verifyEmailFormSchema>;
 
 export function VerifyEmailOTPForm({
   email,
+  authResource,
   handleVerification,
   onCancel,
 }: VerifyEmailOTPFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<VerifyEmailFormType>({
     resolver: zodResolver(verifyEmailFormSchema),
     defaultValues: {
@@ -57,13 +60,35 @@ export function VerifyEmailOTPForm({
     formState: { isSubmitting },
   } = form;
 
+  const loading = isLoading || isSubmitting;
+
+  const resendCode = async () => {
+    if (loading) return;
+
+    setIsLoading(true);
+    try {
+      await authResource.prepareEmailAddressVerification({
+        strategy: 'email_code',
+      });
+      toast.success(
+        <p>
+          Code sent to <span className='underline font-semibold'>{email}</span>
+        </p>
+      );
+    } catch (err: any) {
+      toast.error(err.errors[0].message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Verify Email</CardTitle>
         <CardDescription>
           Enter the verification code sent to: <br />
-          <span className='font-medium'>{email}</span>
+          <span className='font-bold underline'>{email}</span>
         </CardDescription>
       </CardHeader>
 
@@ -107,17 +132,33 @@ export function VerifyEmailOTPForm({
         </Form>
       </CardContent>
 
-      <CardFooter className='justify-between'>
-        <Button variant='ghost' disabled={isSubmitting} onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          type='submit'
-          form='form-verify_email_otp'
-          loading={isSubmitting}
-        >
-          Verify
-        </Button>
+      <CardFooter className='flex-col space-y-4'>
+        <div className='flex items-center justify-between w-full'>
+          <Button variant='ghost' disabled={isSubmitting} onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            type='submit'
+            form='form-verify_email_otp'
+            loading={isSubmitting}
+            disabled={loading}
+          >
+            Verify
+          </Button>
+        </div>
+        <p className='text-sm'>
+          Did not receive a code?{' '}
+          <Button
+            type='button'
+            variant='link'
+            onClick={resendCode}
+            loading={isLoading}
+            disabled={loading}
+            className='hover:no-underline hover:font-medium px-0'
+          >
+            Click here
+          </Button>{' '}
+        </p>
       </CardFooter>
     </Card>
   );

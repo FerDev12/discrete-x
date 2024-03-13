@@ -74,7 +74,7 @@ export function UserButton() {
         </DropdownMenuGroup>
         <DropdownMenuGroup>
           <DropdownMenuItem
-            data-testid='logout'
+            data-testid='btn-logout'
             onClick={logout}
             className='text-destructive'
           >

@@ -7,7 +7,7 @@ export function Hero() {
       <div className='p-4 text-center sm:text-left'>
         <div className='mb-8'>
           <h1 className='text-5xl sm:text-6xl md:text-9xl font-semibold mb-2'>
-            Discreet X
+            Discrete X
           </h1>
           <p className='ml-1 text-lg text-muted-foreground'>
             Private and secure by default.
