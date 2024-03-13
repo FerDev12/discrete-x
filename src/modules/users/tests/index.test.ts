@@ -46,6 +46,7 @@ describe('User module', () => {
         expect(user).not.toBe(undefined);
         expect(user?.userId).toBe(userId);
 
+        // This error is meant to rollback the transaction, do not remove
         throw new Error('Ooops!');
       });
     } catch (err: any) {

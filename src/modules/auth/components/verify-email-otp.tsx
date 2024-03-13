@@ -31,6 +31,7 @@ import { z } from 'zod';
 interface VerifyEmailOTPFormProps {
   email: string;
   handleVerification: (values: VerifyEmailFormType) => Promise<void>;
+  onCancel: () => void;
 }
 
 const verifyEmailFormSchema = z.object({
@@ -42,9 +43,8 @@ type VerifyEmailFormType = z.infer<typeof verifyEmailFormSchema>;
 export function VerifyEmailOTPForm({
   email,
   handleVerification,
+  onCancel,
 }: VerifyEmailOTPFormProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const form = useForm<VerifyEmailFormType>({
     resolver: zodResolver(verifyEmailFormSchema),
     defaultValues: {
@@ -56,16 +56,6 @@ export function VerifyEmailOTPForm({
     handleSubmit,
     formState: { isSubmitting },
   } = form;
-
-  const cancelVerification = () => {
-    const params = Object.fromEntries(searchParams.entries());
-    router.push(
-      `?${new URLSearchParams({
-        ...params,
-        verify: 'false',
-      })}`
-    );
-  };
 
   return (
     <Card>
@@ -91,6 +81,7 @@ export function VerifyEmailOTPForm({
                   <FormLabel>Code</FormLabel>
                   <FormControl>
                     <OTPInput
+                      data-testid='otp-code'
                       maxLength={6}
                       render={({ slots }) => (
                         <InputOTPGroup>
@@ -117,11 +108,7 @@ export function VerifyEmailOTPForm({
       </CardContent>
 
       <CardFooter className='justify-between'>
-        <Button
-          variant='ghost'
-          disabled={isSubmitting}
-          onClick={cancelVerification}
-        >
+        <Button variant='ghost' disabled={isSubmitting} onClick={onCancel}>
           Cancel
         </Button>
         <Button

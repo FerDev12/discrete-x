@@ -25,7 +25,7 @@ import { Separator } from '@/components/ui/separator';
 import { PasswordInput } from './password-input';
 import { useSignUp } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { VerifyEmailOTPForm } from './verify-email-otp';
 import { toast } from 'sonner';
 import { GithubOAuthButton } from './github-oauth-button';
@@ -125,12 +125,23 @@ export function Signup() {
       }
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
+        console.log('Setting session');
         router.push('/');
       }
     } catch (err: any) {
+      console.error(err);
       toast.error(err.errors[0].message);
     }
   };
+
+  const onCancelVerification = useCallback(async () => {
+    setIsVerifyingEmail(false);
+    const query = new URLSearchParams({
+      ...Object.fromEntries(searchParams.entries()),
+      verify: 'false',
+    });
+    router.push(`?${query}`);
+  }, [router, searchParams]);
 
   if (!isLoaded) {
     return null;
@@ -141,6 +152,7 @@ export function Signup() {
       <VerifyEmailOTPForm
         email={form.getValues('email')}
         handleVerification={onHandleVerification}
+        onCancel={onCancelVerification}
       />
     );
   }
