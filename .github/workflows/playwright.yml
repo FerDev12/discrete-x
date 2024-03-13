@@ -1,12 +1,12 @@
-name: Run Tests
-
+name: Playwright Tests
 on:
   push:
-    branches:
-      - '**'
-
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
 jobs:
   test:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     env:
       NEON_DB_URL: ${{ secrets.NEON_DB_URL }}
@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: lts/*
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
@@ -43,5 +43,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run tests
-        run: pnpm test
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Build Project
+        run: pnpm build
+
+      - name: Start Project
+        run: pnpm start & pnpm test:playwright
+
+      - name: Run Playwright tests
+        run: pnpm test:playwright
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <>
       {/* Header */}
       <Header />
-      <main className='flex items-center justify-center container min-h-screen/header'>
+      <main className='flex items-center justify-center min-h-screen/header'>
         {children}
       </main>
     </>

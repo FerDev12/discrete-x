@@ -1,6 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import { boolean, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { users } from '.';
+import { serverImages, users } from '.';
 
 export const servers = pgTable('servers', {
   id: uuid('id')
@@ -20,6 +20,7 @@ export const servers = pgTable('servers', {
 
 export const serversRelations = relations(servers, ({ one }) => ({
   admin: one(users, { fields: [servers.userId], references: [users.id] }),
+  image: one(serverImages),
 }));
 
 export type Server = typeof servers.$inferSelect;

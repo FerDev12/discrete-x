@@ -19,3 +19,6 @@ export const serverImagesRelations = relations(serverImages, ({ one }) => ({
   }),
   file: one(files, { fields: [serverImages.fileId], references: [files.id] }),
 }));
+
+export type ServerImage = typeof serverImages.$inferSelect;
+export type NewServerImage = typeof serverImages.$inferInsert;

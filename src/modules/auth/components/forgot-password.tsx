@@ -22,11 +22,16 @@ import { Link } from '@/components/ui/link';
 import { RestorePassword } from '@/modules/auth/components/restore-password-form';
 import { useSignIn } from '@clerk/nextjs';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Metadata } from 'next';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+
+export const metadata: Metadata = {
+  title: 'Forgot Password',
+};
 
 const forgotPasswordFormSchema = z.object({
   email: z.string().email(),

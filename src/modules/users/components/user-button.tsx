@@ -20,6 +20,12 @@ export function UserButton() {
   const { user } = useUser();
   const { signOut } = useClerk();
 
+  const logout = async () =>
+    await signOut(() => {
+      router.push('/login');
+      router.refresh();
+    });
+
   if (!user) {
     return (
       <Button variant='outline' size='icon'>
@@ -35,7 +41,12 @@ export function UserButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='outline' size='icon'>
+        <Button
+          id='btn-user'
+          data-testid='btn-user'
+          variant='outline'
+          size='icon'
+        >
           <Avatar className='rounded-md'>
             <AvatarImage src={user?.imageUrl} alt='user' />
             <AvatarFallback className='rounded-md'>
@@ -63,7 +74,8 @@ export function UserButton() {
         </DropdownMenuGroup>
         <DropdownMenuGroup>
           <DropdownMenuItem
-            onClick={() => signOut(() => router.push('/login'))}
+            data-testid='btn-logout'
+            onClick={logout}
             className='text-destructive'
           >
             <LogOutIcon className='w-4 h-4 mr-2' /> Logout

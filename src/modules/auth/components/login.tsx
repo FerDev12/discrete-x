@@ -99,6 +99,7 @@ export function Login() {
         <Form {...form}>
           <form
             id='form-login'
+            data-testid='form-login'
             onSubmit={handleSubmit(onLogin)}
             className='flex flex-col space-y-4'
           >
