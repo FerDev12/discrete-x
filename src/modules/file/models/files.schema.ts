@@ -1,6 +1,7 @@
-import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { fileType } from './enums';
+import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+
+export const fileType = pgEnum('file_type', ['image', 'video', 'pdf', 'gif']);
 
 export const files = pgTable('files', {
   id: uuid('id')

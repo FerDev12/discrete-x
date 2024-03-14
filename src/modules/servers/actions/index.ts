@@ -1,17 +1,18 @@
 'use server';
 
 import { db } from '@/database';
-import { InternalServerError } from '@/errors/internal-server-error';
-import { NotFoundError } from '@/errors/not-found-error';
-import { UnauthenticatedError } from '@/errors/unauthenticated-error';
-import { UnauthorizedError } from '@/errors/unauthorized-error';
-import { ValidationError } from '@/errors/validation-error';
+import { InternalServerError } from '@/lib/errors/internal-server-error';
+import { NotFoundError } from '@/lib/errors/not-found-error';
+import { UnauthenticatedError } from '@/lib/errors/unauthenticated-error';
+import { UnauthorizedError } from '@/lib/errors/unauthorized-error';
+import { ValidationError } from '@/lib/errors/validation-error';
 import { UUID } from '@/lib/types';
 import { tryCatch } from '@/lib/utils/try-catch';
-import { files, serverImages, servers, users } from '@/models';
 import { auth } from '@clerk/nextjs';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { ServerRepository } from '../repository';
+import { servers, users } from '@/database/schema';
 
 export const createServerShema = z.object({
   name: z
@@ -30,7 +31,8 @@ export const createServerShema = z.object({
 export async function createServer(data: z.infer<typeof createServerShema>) {
   return await tryCatch(async () => {
     // Authenticate request & extract userId
-    const { userId } = auth(); // FIXME: Is causing testing errors
+    const { userId } = auth();
+
     if (!userId) {
       throw new UnauthenticatedError();
     }
@@ -53,41 +55,13 @@ export async function createServer(data: z.infer<typeof createServerShema>) {
       throw new ValidationError(dataRes.error);
     }
 
-    const {
-      name,
-      description,
-      imageUrl,
-      private: privateServer,
-    } = dataRes.data;
+    const { data: newServerData } = dataRes;
 
-    // Create server
-    const server = await db.transaction(async (tx) => {
-      const [server] = await tx
-        .insert(servers)
-        .values({
-          userId: dbUser.id,
-          name,
-          description,
-          imageUrl,
-          private: privateServer,
-        })
-        .returning();
+    const serverRepo = new ServerRepository();
 
-      if (imageUrl) {
-        const [file] = await tx
-          .insert(files)
-          .values({
-            url: imageUrl,
-            type: 'image',
-          })
-          .returning();
-        await tx.insert(serverImages).values({
-          serverId: server.id,
-          fileId: file.id,
-        });
-
-        return server;
-      }
+    const server = await serverRepo.createServer({
+      ...newServerData,
+      userId: dbUser.id,
     });
 
     if (!server) {
@@ -122,6 +96,8 @@ export async function updateServer(
       throw new UnauthenticatedError();
     }
 
+    const serverRepo = new ServerRepository();
+
     const dbUser = await db.query.users.findFirst({
       columns: {
         id: true,
@@ -133,8 +109,10 @@ export async function updateServer(
       throw new NotFoundError('User not found.');
     }
 
-    const dbServer = await db.query.servers.findFirst({
-      where: eq(servers.id, serverId),
+    const dbServer = await serverRepo.getServerById(serverId, {
+      columns: {
+        userId: true,
+      },
     });
 
     if (!dbServer) {
@@ -151,48 +129,9 @@ export async function updateServer(
       throw new ValidationError(dataRes.error);
     }
 
-    const updatedServer = await db.transaction(async (tx) => {
-      const { data } = dataRes;
+    const { updateServer } = new ServerRepository();
 
-      const [updatedServer] = await tx
-        .update(servers)
-        .set(data)
-        .where(eq(servers.id, serverId))
-        .returning();
-
-      if (dbServer.imageUrl === updatedServer.imageUrl) {
-        return updatedServer;
-      }
-
-      const dbServerImage = await tx.query.serverImages.findFirst();
-
-      if (!dbServerImage && !!data.imageUrl) {
-        const [file] = await tx
-          .insert(files)
-          .values({
-            url: data.imageUrl,
-            type: 'image',
-          })
-          .returning();
-        await tx.insert(serverImages).values({
-          serverId: updatedServer.id,
-          fileId: file.id,
-        });
-
-        return updatedServer;
-      }
-
-      if (dbServerImage) {
-        await tx
-          .update(files)
-          .set({
-            url: data.imageUrl,
-          })
-          .where(eq(files.id, dbServerImage.fileId));
-      }
-
-      return updatedServer;
-    });
+    const updatedServer = await updateServer(dbServer.id as UUID, dataRes.data);
 
     if (!updatedServer) {
       throw new InternalServerError();

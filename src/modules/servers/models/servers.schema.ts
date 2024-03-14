@@ -1,6 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
 import { boolean, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { serverImages, users } from '.';
+import { serverImages } from './server-images.schema';
+import { users } from '../../users/models/index.schema';
 
 export const servers = pgTable('servers', {
   id: uuid('id')
