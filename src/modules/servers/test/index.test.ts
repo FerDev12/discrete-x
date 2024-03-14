@@ -1,21 +1,41 @@
-import { db, pool } from '@/database';
-import { createServer, deleteServer, updateServer } from '../actions/client';
-import { UUID } from '@/lib/types';
-import { eq } from 'drizzle-orm';
-import { servers } from '@/models';
+import { pool } from '@/database';
+import { UserRepository } from '@/modules/users/repository';
+import { ServerRepository } from '../repository';
+import { randomBytes, randomUUID } from 'crypto';
 
-const data = {
-  name: 'Bloom',
+const userIdentifier = randomBytes(4).toString('hex');
+let testUserId = '';
+const testUserData = {
+  userId: userIdentifier,
+  username: userIdentifier,
+  email: userIdentifier + '@test.com',
+  password: 'password',
+};
+
+const serverIdentifier = randomBytes(4).toString('hex');
+let testServerId = '';
+const testServerData = {
+  name: serverIdentifier,
   description: 'Testing server',
   imageUrl: 'https://image.test.jpg',
 };
-const newImageUrl = 'https://new-image.test.jpg';
 
-let serverId: UUID | null = null;
+const newServerImageUrl = 'https://new-image.test.jpg';
+
+const userRepo = new UserRepository();
+const serverRepo = new ServerRepository();
 
 async function cleanUp() {
   try {
-    //
+    // Delete created user
+    await userRepo.deleteUserByUserId(testUserId);
+    // Delete created server
+    if (testServerId) {
+      const createdServer = await serverRepo.getServerById(testServerId);
+      if (createdServer) {
+        await serverRepo.deleteServerById(createdServer.id);
+      }
+    }
   } catch (err: any) {
     console.error(err);
   } finally {
@@ -24,7 +44,9 @@ async function cleanUp() {
 }
 
 beforeAll(async () => {
-  // Authenticate clerk user for subsequent requests
+  // Create a test user and store it's id reference
+  const user = await userRepo.createUser(testUserData);
+  testUserId = user.id;
 });
 
 afterAll(async () => {
@@ -32,40 +54,54 @@ afterAll(async () => {
 });
 
 describe('Server module', () => {
-  it('creates a server', async () => {});
-  // it('Creates a server', async () => {
-  //   const { error, data: server } = await createServer(data);
-  //   expect(error).toBeNull();
-  //   serverId = server?.id as UUID;
-  //   expect(server).not.toBe(undefined);
-  //   expect(server?.name).toBe(data.name);
-  // });
-  // it('Updates a server image', async () => {
-  //   expect(serverId).not.toBeNull();
-  //   const { error, data: server } = await updateServer(serverId!, {
-  //     imageUrl: newImageUrl,
-  //   });
-  //   expect(error).toBeNull();
-  //   const serverImage = await db.query.serverImages.findFirst({
-  //     with: {
-  //       file: true,
-  //     },
-  //   });
-  //   expect(serverImage).not.toBe(undefined);
-  //   expect(serverImage?.file.url).toBe(newImageUrl);
-  //   expect(server).not.toBe(undefined);
-  //   expect(server?.imageUrl).toBe(newImageUrl);
-  // });
-  // it('Deletes a server', async () => {
-  //   expect(serverId).not.toBeNull();
-  //   const { error } = await deleteServer(serverId!);
-  //   expect(error).toBeNull();
-  //   const dbServer = await db.query.servers.findFirst({
-  //     columns: {
-  //       id: true,
-  //     },
-  //     where: eq(servers.id, serverId!),
-  //   });
-  //   expect(dbServer).toBe(undefined);
-  // });
+  it('creates a server', async () => {
+    const server = await serverRepo.createServer({
+      ...testServerData,
+      userId: testUserId,
+    });
+
+    testServerId = server.id;
+
+    expect(server).not.toBeUndefined();
+    expect(server.userId).toBe(testUserId);
+  });
+
+  it('updates a server', async () => {
+    expect(testServerId).not.toBeUndefined();
+
+    const server = await serverRepo.getServerById(testServerId);
+
+    expect(server).not.toBeUndefined();
+
+    const updatedServer = await serverRepo.updateServer(testServerId, {
+      imageUrl: newServerImageUrl,
+    });
+
+    expect(updatedServer.imageUrl).toBe(newServerImageUrl);
+  });
+
+  it('deletes a server', async () => {
+    const server = await serverRepo.getServerById(testServerId);
+
+    expect(server).not.toBeUndefined();
+
+    await serverRepo.deleteServerById(testServerId);
+
+    const deletedServer = await serverRepo.getServerById(testServerId);
+    expect(deletedServer).toBeUndefined();
+    testServerId = '';
+  });
+
+  it('failes to create a server for a non existent user', async () => {
+    const fakeUserId = randomUUID();
+    try {
+      await serverRepo.createServer({
+        userId: fakeUserId,
+        ...testServerData,
+      });
+    } catch (err: any) {}
+
+    const fakeUserServers = await serverRepo.getServersByUserId(fakeUserId);
+    expect(fakeUserServers.length).toBe(0);
+  });
 });

@@ -1,6 +1,6 @@
 import { pgTable, uuid } from 'drizzle-orm/pg-core';
-import { servers } from './servers';
-import { files } from '.';
+import { servers } from './servers.schema';
+import { files } from '../../file/models/index.schema';
 import { relations } from 'drizzle-orm';
 
 export const serverImages = pgTable('server_images', {

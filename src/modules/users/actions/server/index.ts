@@ -1,20 +1,20 @@
 import 'server-only';
 
-import { files, userImages, users } from '@/models';
-import { eq } from 'drizzle-orm';
 import { clerkClient } from '@clerk/nextjs';
-import { db } from '@/database';
+import { UserRepository } from '../../repository';
+import { UUID } from '@/lib/types';
 
 export async function deleteUserByUserId(userId: string) {
-  const dbUser = await db.query.users.findFirst({
+  const userRepo = new UserRepository();
+
+  const dbUser = await userRepo.getUserByUserId(userId, {
     columns: {
       id: true,
     },
-    where: eq(users.userId, userId),
   });
 
   if (dbUser) {
-    await db.delete(users).where(eq(users.userId, userId));
+    await userRepo.deleteUserByUserId(dbUser.id as UUID);
   }
 }
 
@@ -31,57 +31,26 @@ export async function upsertUser(userId: string) {
 
   if (!email) return;
 
-  await db.transaction(async (tx) => {
-    // Upsert user
-    const [dbUser] = await tx
-      .insert(users)
-      .values({
-        userId: user.id,
-        username: user.username!,
-        email: email,
-      })
-      .onConflictDoUpdate({
-        target: users.userId,
-        set: {
-          username: user.username!,
-          email: email,
-        },
-      })
-      .returning();
+  const userRepo = new UserRepository();
 
-    // Query for existing user image
-    const dbUserImage = await tx.query.userImages.findFirst({
-      where: eq(userImages.userId, dbUser.id),
-      with: {
-        image: true,
-      },
-    });
-
-    if (!dbUserImage) {
-      // Create file
-      const [file] = await tx
-        .insert(files)
-        .values({
-          url: user.imageUrl,
-          type: 'image',
-        })
-        .returning();
-      // Create user image
-      await tx.insert(userImages).values({
-        userId: dbUser.id,
-        fileId: file.id,
-      });
-    } else {
-      if (dbUserImage.image?.url === user.imageUrl) {
-        // If user image exists and has the same url as passed in imageUrl return
-        return;
-      }
-
-      // Update image file url
-      await tx
-        .update(files)
-        .set({ url: user.imageUrl })
-        .where(eq(files.id, dbUserImage.fileId));
-    }
+  const dbUser = await userRepo.getUserByUserId(user.id, {
+    columns: {
+      id: true,
+    },
   });
+
+  if (dbUser) {
+    await userRepo.updateUser(dbUser.id as UUID, {
+      username: user.username,
+      email,
+      imageUrl: user.imageUrl,
+    });
+  } else {
+    await userRepo.createUser({
+      userId: user.id,
+      email,
+      username: user.username,
+      imageUrl: user.imageUrl,
+    });
+  }
 }

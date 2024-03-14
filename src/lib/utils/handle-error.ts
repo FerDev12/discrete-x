@@ -1,5 +1,5 @@
-import { BaseError } from '@/errors/base-error';
-import { InternalServerError } from '@/errors/internal-server-error';
+import { BaseError } from '@/lib/errors/base-error';
+import { InternalServerError } from '@/lib/errors/internal-server-error';
 
 export function handleError(err: unknown) {
   return {

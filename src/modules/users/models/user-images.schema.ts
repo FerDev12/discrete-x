@@ -1,6 +1,7 @@
-import { pgTable, primaryKey, unique, uuid } from 'drizzle-orm/pg-core';
-import { files, users } from '.';
+import { pgTable, unique, uuid } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
+import { users } from './users.schema';
+import { files } from '@/modules/file/models/index.schema';
 
 export const userImages = pgTable(
   'user_images',
